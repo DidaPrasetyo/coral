@@ -55,8 +55,8 @@ def main():
     args = parser.parse_args()
 
     print('Loading {} with {} labels.'.format(args.model, args.labels))
-    # interpreter = make_interpreter(args.model)
-    interpreter = tf.lite.Interpreter(args.model)
+    interpreter = make_interpreter(args.model)
+    # interpreter = tf.lite.Interpreter(args.model)
     interpreter.allocate_tensors()
     labels = read_label_file(args.labels)
     inference_size = input_size(interpreter)
