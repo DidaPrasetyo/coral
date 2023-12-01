@@ -1,7 +1,8 @@
-import tensorflow as tf
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
-if len(physical_devices) > 0:
-    tf.config.experimental.set_memory_growth(physical_devices[0], True)
+# import tensorflow as tf
+# physical_devices = tf.config.experimental.list_physical_devices('GPU')
+# if len(physical_devices) > 0:
+#     tf.config.experimental.set_memory_growth(physical_devices[0], True)
+import tflite_runtime.interpreter as tflite
 from absl import app, flags, logging
 from absl.flags import FLAGS
 import core.utils as utils
@@ -36,9 +37,12 @@ def main(_argv):
 
     # load model
     if FLAGS.framework == 'tflite':
-            interpreter = tf.lite.Interpreter(model_path=FLAGS.weights)
+            # interpreter = tf.lite.Interpreter(model_path=FLAGS.weights)
+            interpreter = tflite.Interpreter(model_path=FLAGS.weights,
+              experimental_delegates=[tflite.load_delegate('libedgetpu.so.1')])
     else:
-            saved_model_loaded = tf.saved_model.load(FLAGS.weights, tags=[tag_constants.SERVING])
+            # saved_model_loaded = tf.saved_model.load(FLAGS.weights, tags=[tag_constants.SERVING])
+            saved_model_loaded = tflite.saved_model.load(FLAGS.weights, tags=[tag_constants.SERVING])
 
     # loop through images in list and run Yolov4 model on each
     for count, image_path in enumerate(images, 1):
@@ -63,21 +67,33 @@ def main(_argv):
             interpreter.invoke()
             pred = [interpreter.get_tensor(output_details[i]['index']) for i in range(len(output_details))]
             if FLAGS.model == 'yolov3' and FLAGS.tiny == True:
-                boxes, pred_conf = filter_boxes(pred[1], pred[0], score_threshold=0.25, input_shape=tf.constant([input_size, input_size]))
+                # boxes, pred_conf = filter_boxes(pred[1], pred[0], score_threshold=0.25, input_shape=tf.constant([input_size, input_size]))
+                boxes, pred_conf = filter_boxes(pred[1], pred[0], score_threshold=0.25, input_shape=tflite.constant([input_size, input_size]))
             else:
-                boxes, pred_conf = filter_boxes(pred[0], pred[1], score_threshold=0.25, input_shape=tf.constant([input_size, input_size]))
+                # boxes, pred_conf = filter_boxes(pred[0], pred[1], score_threshold=0.25, input_shape=tf.constant([input_size, input_size]))
+                boxes, pred_conf = filter_boxes(pred[0], pred[1], score_threshold=0.25, input_shape=tflite.constant([input_size, input_size]))
         else:
             infer = saved_model_loaded.signatures['serving_default']
-            batch_data = tf.constant(images_data)
+            # batch_data = tf.constant(images_data)
+            batch_data = tflite.constant(images_data)
             pred_bbox = infer(batch_data)
             for key, value in pred_bbox.items():
                 boxes = value[:, :, 0:4]
                 pred_conf = value[:, :, 4:]
 
-        boxes, scores, classes, valid_detections = tf.image.combined_non_max_suppression(
-            boxes=tf.reshape(boxes, (tf.shape(boxes)[0], -1, 1, 4)),
-            scores=tf.reshape(
-                pred_conf, (tf.shape(pred_conf)[0], -1, tf.shape(pred_conf)[-1])),
+        # boxes, scores, classes, valid_detections = tf.image.combined_non_max_suppression(
+        #     boxes=tf.reshape(boxes, (tf.shape(boxes)[0], -1, 1, 4)),
+        #     scores=tf.reshape(
+        #         pred_conf, (tf.shape(pred_conf)[0], -1, tf.shape(pred_conf)[-1])),
+        #     max_output_size_per_class=50,
+        #     max_total_size=50,
+        #     iou_threshold=FLAGS.iou,
+        #     score_threshold=FLAGS.score
+        # )
+        boxes, scores, classes, valid_detections = tflite.image.combined_non_max_suppression(
+            boxes=tflite.reshape(boxes, (tflite.shape(boxes)[0], -1, 1, 4)),
+            scores=tflite.reshape(
+                pred_conf, (tflite.shape(pred_conf)[0], -1, tflite.shape(pred_conf)[-1])),
             max_output_size_per_class=50,
             max_total_size=50,
             iou_threshold=FLAGS.iou,
