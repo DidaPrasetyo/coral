@@ -63,7 +63,7 @@ def main():
     labels = read_label_file(label)
     inference_size = input_size(interpreter)
 
-    dir_path = time.strftime('%Y-%m-%d_%H:%M:%S')+model_name
+    dir_path = model_name+time.strftime('%Y-%m-%d_%H:%M:%S')
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
 
@@ -117,7 +117,7 @@ def main():
                 cv2.putText(frame, f"Persons: {detected_persons}", (40, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
                 cv2.putText(frame, f"inference TIme: {(inference_time * 1000):.4f} ms", (80, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
             
-            dim = (args.width, args.height)
+            dim = (int(args.width), int(args.height))
             frame = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
 
             blob_img = convert_image_to_blob(frame)
