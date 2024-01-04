@@ -191,4 +191,7 @@ def upload_image_to_mysql(host, timestamp, count, blob_data):
             print("MySQL connection closed")
 
 if __name__ == '__main__':
+    program_start = time.time()
     main()
+    program_finish = time.time() - program_start
+    print(f'Program duration: {program_finish} s')
