@@ -136,7 +136,7 @@ def main():
 #     cv2.imwrite(filename, frame)
 #     print(f"Frame saved as '{filename}'")
 
-def append_objs_to_img(cv2_im, inference_size, objs, labels, target_label="person", debug):
+def append_objs_to_img(cv2_im, inference_size, objs, labels, target_label="person", debug_flag):
     height, width, channels = cv2_im.shape
     scale_x, scale_y = width / inference_size[0], height / inference_size[1]
     for obj in objs:
@@ -150,7 +150,7 @@ def append_objs_to_img(cv2_im, inference_size, objs, labels, target_label="perso
 
             cv2_im = cv2.rectangle(cv2_im, (x0, y0), (x1, y1), (0, 255, 0), 2)
 
-            if debug:
+            if debug_flag:
                 cv2_im = cv2.putText(cv2_im, label, (x0, y0+30),
                                      cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
     return cv2_im
