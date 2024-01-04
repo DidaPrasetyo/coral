@@ -112,16 +112,16 @@ def main():
                         
                         cv2_im = append_objs_to_img(cv2_im, inference_size, objs, labels, args.debug)
                         
-                        if args.debug:
-                            cv2.putText(frame, f"FPS: {fps:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
-                            cv2.putText(frame, f"Persons: {detected_persons}", (40, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
-                            cv2.putText(frame, f"inference TIme: {(inference_time * 1000):.4f} ms", (80, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
-                            
-                        dim = (args.width, args.height)
-                        frame = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
+            if args.debug:
+                cv2.putText(frame, f"FPS: {fps:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+                cv2.putText(frame, f"Persons: {detected_persons}", (40, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+                cv2.putText(frame, f"inference TIme: {(inference_time * 1000):.4f} ms", (80, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+            
+            dim = (args.width, args.height)
+            frame = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
 
-                        blob_img = convert_image_to_blob(frame)
-                        upload_image_to_mysql(args.host, time.strftime('%Y-%m-%d %H:%M:%S'), detected_persons, blob_img)
+            blob_img = convert_image_to_blob(frame)
+            upload_image_to_mysql(args.host, time.strftime('%Y-%m-%d %H:%M:%S'), detected_persons, blob_img)
 
             # count += 1
             # save_frame_as_image(frame, detected_persons, count)
