@@ -63,11 +63,11 @@ def main():
     labels = read_label_file(label)
     inference_size = input_size(interpreter)
 
-    dir_path = time.strftime('%Y-%m-%d %H:%M:%S')+model_name
+    dir_path = time.strftime('%Y-%m-%d_%H:%M:%S')+model_name
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
 
-    with open(f'{model_name}_{args.width}x{args.height}_fps_values.txt', 'w') as file1, open(f'{model_name}_{args.width}x{args.height}_inference_values.txt', 'w') as file2:
+    with open(f'{dir_path}/{model_name}_{args.width}x{args.height}_fps_values.txt', 'w') as file1, open(f'{dir_path}/{model_name}_{args.width}x{args.height}_inference_values.txt', 'w') as file2:
 
         cap = cv2.VideoCapture(args.input)
 
