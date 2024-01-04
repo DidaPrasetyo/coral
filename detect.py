@@ -26,9 +26,9 @@ def main():
                         help='Host ip to connect to database')
     parser.add_argument('--debug', action='store_true', default=False,
                         help='hide and show text information in video')
-    parsep.add_argument('-w', '--width', default=1280,
+    parser.add_argument('-w', '--width', default=1280,
                         help='set width for the video input')
-    parsep.add_argument('-h', '--height', default=720,
+    parser.add_argument('-h', '--height', default=720,
                         help='set height for the video input')
     args = parser.parse_args()
 
