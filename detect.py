@@ -67,7 +67,7 @@ def main():
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
 
-    dir_model_path = model_name
+    dir_model_path = f'{dir_path}/{model_name}'
     if not os.path.exists(dir_model_path):
         os.makedirs(dir_model_path)
 
