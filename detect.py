@@ -71,7 +71,7 @@ def main():
     if not os.path.exists(dir_model_path):
         os.makedirs(dir_model_path)
 
-    with open(f'{dir_path}/{dir_model_path}/{model_name}_{args.width}x{args.height}_fps_values.txt', 'w') as file1, open(f'{dir_path}/{dir_model_path}/{model_name}_{args.width}x{args.height}_inference_values.txt', 'w') as file2:
+    with open(f'{dir_model_path}/{model_name}_{args.width}x{args.height}_fps_values.txt', 'w') as file1, open(f'{dir_model_path}/{model_name}_{args.width}x{args.height}_inference_values.txt', 'w') as file2:
 
         cap = cv2.VideoCapture(args.input)
 
