@@ -114,7 +114,7 @@ def main():
                         
             if args.debug:
                 cv2.putText(frame, f"FPS: {fps:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1)
-                cv2.putText(frame, f"Persons: {detected_persons}", (200, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1)
+                cv2.putText(frame, f"Persons: {detected_persons}", (175, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1)
                 cv2.putText(frame, f"inference TIme: {(inference_time * 1000):.4f} ms", (350, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1)
             
             dim = (int(args.width), int(args.height))
