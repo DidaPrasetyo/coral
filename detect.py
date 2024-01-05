@@ -78,61 +78,70 @@ def main():
         start_time = time.time()
         # count = 0
 
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                print("Error: Failed to grab frame / End of the frame")
-                break
+        try:
+            while cap.isOpened():
+                ret, frame = cap.read()
+                if not ret:
+                    print("Error: Failed to grab frame / End of the frame")
+                    break
 
-            cv2_im = frame
+                if (time.time() - start_time) >= 3600:
+                    print("1 hour elapsed. Program done.")
+                    break
 
-            if (time.time() - start_time) > 0 :
-                elapsed_time = time.time() - start_time
-                fps = 1 / elapsed_time
-                start_time = time.time()
+                cv2_im = frame
 
-                file1.write(f'{fps} - {time.strftime("%Y-%m-%d %H:%M:%S")}\n')
+                if (time.time() - start_time) > 0 :
+                    elapsed_time = time.time() - start_time
+                    fps = 1 / elapsed_time
+                    start_time = time.time()
 
-            cv2_im_rgb = cv2.cvtColor(cv2_im, cv2.COLOR_BGR2RGB)
-            cv2_im_rgb = cv2.resize(cv2_im_rgb, inference_size)
+                    file1.write(f'{fps} - {time.strftime("%Y-%m-%d %H:%M:%S")}\n')
 
-            inference_start_time = time.perf_counter()
-            run_inference(interpreter, cv2_im_rgb.tobytes())
-            inference_time = time.perf_counter() - inference_start_time
+                cv2_im_rgb = cv2.cvtColor(cv2_im, cv2.COLOR_BGR2RGB)
+                cv2_im_rgb = cv2.resize(cv2_im_rgb, inference_size)
 
-            # objs = get_objects(interpreter, args.threshold)[:args.top_k] # limit number detected
-            objs = get_objects(interpreter, args.threshold)
+                inference_start_time = time.perf_counter()
+                run_inference(interpreter, cv2_im_rgb.tobytes())
+                inference_time = time.perf_counter() - inference_start_time
 
-            file2.write(f'{inference_time} - {time.strftime("%Y-%m-%d %H:%M:%S")}\n')
+                # objs = get_objects(interpreter, args.threshold)[:args.top_k] # limit number detected
+                objs = get_objects(interpreter, args.threshold)
 
-            detected_persons = 0
+                file2.write(f'{inference_time} - {time.strftime("%Y-%m-%d %H:%M:%S")}\n')
 
-            if objs:
-                print('Detected Objects:')
-                for obj in objs:
-                    if labels.get(obj.id, obj.id) == "person":
-                        detected_persons += 1
-                        # print(f"{labels.get(obj.id, obj.id)} - Score: {obj.score:.2f}")
-                        
-                        cv2_im = append_objs_to_img(cv2_im, inference_size, objs, labels, args.debug)
-                        
-            if args.debug:
-                cv2.putText(frame, f"FPS: {fps:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1)
-                cv2.putText(frame, f"Persons: {detected_persons}", (175, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1)
-                cv2.putText(frame, f"inference TIme: {(inference_time * 1000):.4f} ms", (350, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1)
-            
-            dim = (int(args.width), int(args.height))
-            frame = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
+                detected_persons = 0
 
-            blob_img = convert_image_to_blob(frame)
-            upload_image_to_mysql(args.host, time.strftime('%Y-%m-%d %H:%M:%S'), detected_persons, blob_img)
+                if objs:
+                    print('Detected Objects:')
+                    for obj in objs:
+                        if labels.get(obj.id, obj.id) == "person":
+                            detected_persons += 1
+                            # print(f"{labels.get(obj.id, obj.id)} - Score: {obj.score:.2f}")
+                            
+                            cv2_im = append_objs_to_img(cv2_im, inference_size, objs, labels, args.debug)
+                            
+                if args.debug:
+                    cv2.putText(frame, f"FPS: {fps:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1)
+                    cv2.putText(frame, f"Persons: {detected_persons}", (175, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1)
+                    cv2.putText(frame, f"inference TIme: {(inference_time * 1000):.4f} ms", (350, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1)
+                
+                dim = (int(args.width), int(args.height))
+                frame = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
 
-            # count += 1
-            # save_frame_as_image(frame, detected_persons, count)
-            print(f"FPS: {fps:.2f}")
-            print(f"Detected Person: {detected_persons}")
+                blob_img = convert_image_to_blob(frame)
+                upload_image_to_mysql(args.host, time.strftime('%Y-%m-%d %H:%M:%S'), detected_persons, blob_img)
 
-        cap.release()
+                # count += 1
+                # save_frame_as_image(frame, detected_persons, count)
+                print(f"FPS: {fps:.2f}")
+                print(f"Detected Person: {detected_persons}")
+
+        except KeyboardInterrupt:
+            print("Inference process interrupted.")
+
+        finally:
+            cap.release()
 
 # def save_frame_as_image(frame, detected_persons, count):
 #     timestamp = int(time.time())
