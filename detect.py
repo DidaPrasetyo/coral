@@ -76,6 +76,8 @@ def main():
 
     start_time = time.time()
     time_elapsed = 0
+
+    fps_start_time = time.time()
     # count = 0
 
     with open(f'{dir_model_path}/{model_name}_{args.width}x{args.height}_fps_values.txt', 'w') as file1, open(f'{dir_model_path}/{model_name}_{args.width}x{args.height}_inference_values.txt', 'w') as file2:
@@ -92,10 +94,10 @@ def main():
 
                 cv2_im = frame
 
-                if (time.time() - start_time) > 0 :
-                    elapsed_time = time.time() - start_time
+                if (time.time() - fps_start_time) > 0 :
+                    elapsed_time = time.time() - fps_start_time
                     fps = 1 / elapsed_time
-                    start_time = time.time()
+                    fps_start_time = time.time()
 
                     file1.write(f'{fps} - {time.strftime("%Y-%m-%d %H:%M:%S")}\n')
 
