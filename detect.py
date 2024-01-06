@@ -76,6 +76,7 @@ def main():
         cap = cv2.VideoCapture(args.input)
 
         start_time = time.time()
+        time_elapsed = 0
         # count = 0
 
         try:
@@ -85,7 +86,7 @@ def main():
                     print("Error: Failed to grab frame / End of the frame")
                     break
 
-                if (time.time() - start_time) >= 3600:
+                if time_elapsed >= 3600:
                     print("1 hour elapsed. Program done.")
                     break
 
@@ -137,6 +138,8 @@ def main():
                 # save_frame_as_image(frame, detected_persons, count)
                 print(f"FPS: {fps:.2f}")
                 print(f"Detected Person: {detected_persons}")
+                time_elapsed = time.time() - start_time
+                print(f"Elapsed Time : {time_elapsed} seconds")
 
         except KeyboardInterrupt:
             print("Inference process interrupted.")
