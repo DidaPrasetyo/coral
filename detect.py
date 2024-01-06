@@ -78,7 +78,6 @@ def main():
     time_elapsed = 0
 
     fps_start_time = time.time()
-    # count = 0
 
     with open(f'{dir_model_path}/{model_name}_{args.width}x{args.height}_fps_values.txt', 'w') as file1, open(f'{dir_model_path}/{model_name}_{args.width}x{args.height}_inference_values.txt', 'w') as file2:
         try:
@@ -136,8 +135,6 @@ def main():
                     blob_img = convert_image_to_blob(frame)
                     upload_image_to_mysql(args.host, time.strftime('%Y-%m-%d %H:%M:%S'), detected_persons, blob_img)
 
-                # count += 1
-                # save_frame_as_image(frame, detected_persons, count)
                 print(f"FPS: {fps:.2f}")
                 print(f"Detected Person: {detected_persons}")
                 time_elapsed = time.time() - start_time
@@ -149,12 +146,6 @@ def main():
         finally:
             cap.release()
 
-# def save_frame_as_image(frame, detected_persons, count):
-#     timestamp = int(time.time())
-#     filename = f'image/{timestamp}_total_{detected_persons}_{count}.jpg'
-#     cv2.imwrite(filename, frame)
-#     print(f"Frame saved as '{filename}'")
-
 def append_objs_to_img(cv2_im, inference_size, objs, labels, debug, target_label="person"):
     height, width, channels = cv2_im.shape
     scale_x, scale_y = width / inference_size[0], height / inference_size[1]
@@ -164,7 +155,6 @@ def append_objs_to_img(cv2_im, inference_size, objs, labels, debug, target_label
             x0, y0 = int(bbox.xmin), int(bbox.ymin)
             x1, y1 = int(bbox.xmax), int(bbox.ymax)
 
-            # percent = int(100 * obj.score)
             label = '{:.2f} {}'.format(obj.score, labels.get(obj.id, obj.id))
 
             cv2_im = cv2.rectangle(cv2_im, (x0, y0), (x1, y1), (0, 255, 0), 2)
@@ -193,7 +183,6 @@ def upload_image_to_mysql(host, timestamp, count, blob_data):
         if connection.is_connected():
             cursor = connection.cursor()
 
-            # Example table schema: CREATE TABLE images (id INT AUTO_INCREMENT PRIMARY KEY, image_data LONGBLOB);
             query = "INSERT INTO detection_log (detect_time, count, img) VALUES (%s, %s, %s)"
             cursor.execute(query, (timestamp, count, blob_data))
 
