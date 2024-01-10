@@ -17,7 +17,14 @@ def main():
     # parser.add_argument('-tk', '--top_k', type=int, default=3,
     #                     help='number of categories with highest score to display')
     parser.add_argument('-m', '--model', required=True,
-                        choices=["mobilenetv1", "mobilenetv2", "mobiledet", "efficientdet0", "efficientdet1", "efficientdet2", "efficientdet3"], help='Choose the available model')
+                        choices=["mobilenetv1", 
+                                 "mobilenetv2", 
+                                 "mobiledet", 
+                                 "efficientdet0", 
+                                 "efficientdet1", 
+                                 "efficientdet2", 
+                                 "efficientdet3"], 
+                        help='Choose the available model')
     parser.add_argument('-i', '--input', required=True,
                         help='File path of video file or camera index (0 for default camera)')
     parser.add_argument('-t', '--threshold', type=float, default=0.3,
@@ -63,15 +70,6 @@ def main():
     labels = read_label_file(label)
     inference_size = input_size(interpreter)
 
-    dir_path = time.strftime('%Y-%m-%d_%H:%M:%S')
-    if not os.path.exists(dir_path):
-        os.makedirs(dir_path)
-
-    dir_model_path = f'{dir_path}/{model_name}'
-    if not os.path.exists(dir_model_path):
-        os.makedirs(dir_model_path)
-
-
     cap = cv2.VideoCapture(args.input)
 
     start_time = time.time()
@@ -79,72 +77,67 @@ def main():
 
     fps_start_time = time.time()
 
-    with open(f'{dir_model_path}/{model_name}_{args.width}x{args.height}_fps_values.txt', 'w') as file1, open(f'{dir_model_path}/{model_name}_{args.width}x{args.height}_inference_values.txt', 'w') as file2:
-        try:
-            while cap.isOpened():
-                ret, frame = cap.read()
-                if not ret:
-                    print("Error: Failed to grab frame / End of the frame")
-                    break
+    try:
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                print("Error: Failed to grab frame / End of the frame")
+                break
 
-                if time_elapsed >= 3600:
-                    print("1 hour elapsed. Program done.")
-                    break
+            if time_elapsed >= 3600:
+                print("1 hour elapsed. Program done.")
+                break
 
-                cv2_im = frame
+            cv2_im = frame
 
-                if (time.time() - fps_start_time) > 0 :
-                    elapsed_time = time.time() - fps_start_time
-                    fps = 1 / elapsed_time
-                    fps_start_time = time.time()
+            if (time.time() - fps_start_time) > 0 :
+                elapsed_time = time.time() - fps_start_time
+                fps = 1 / elapsed_time
+                fps_start_time = time.time()
 
-                    file1.write(f'{fps} - {time.strftime("%Y-%m-%d %H:%M:%S")}\n')
+            cv2_im_rgb = cv2.cvtColor(cv2_im, cv2.COLOR_BGR2RGB)
+            cv2_im_rgb = cv2.resize(cv2_im_rgb, inference_size)
 
-                cv2_im_rgb = cv2.cvtColor(cv2_im, cv2.COLOR_BGR2RGB)
-                cv2_im_rgb = cv2.resize(cv2_im_rgb, inference_size)
+            inference_start_time = time.perf_counter()
+            run_inference(interpreter, cv2_im_rgb.tobytes())
+            inference_time = time.perf_counter() - inference_start_time
 
-                inference_start_time = time.perf_counter()
-                run_inference(interpreter, cv2_im_rgb.tobytes())
-                inference_time = time.perf_counter() - inference_start_time
+            # objs = get_objects(interpreter, args.threshold)[:args.top_k] # limit number detected
+            objs = get_objects(interpreter, args.threshold)
 
-                # objs = get_objects(interpreter, args.threshold)[:args.top_k] # limit number detected
-                objs = get_objects(interpreter, args.threshold)
+            detected_persons = 0
 
-                file2.write(f'{inference_time} - {time.strftime("%Y-%m-%d %H:%M:%S")}\n')
+            if objs:
+                print('Detected Objects:')
+                for obj in objs:
+                    if labels.get(obj.id, obj.id) == "person":
+                        detected_persons += 1
+                        # print(f"{labels.get(obj.id, obj.id)} - Score: {obj.score:.2f}")
+                        
+                        cv2_im = append_objs_to_img(cv2_im, inference_size, objs, labels, args.debug)
+                        
+            if args.debug:
+                cv2.putText(frame, f"FPS: {fps:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1)
+                cv2.putText(frame, f"Persons: {detected_persons}", (175, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1)
+                cv2.putText(frame, f"inference TIme: {(inference_time * 1000):.4f} ms", (350, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1)
+            
+            if detected_persons > 0:
+                dim = (int(args.width), int(args.height))
+                frame = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
 
-                detected_persons = 0
+                blob_img = convert_image_to_blob(frame)
+                upload_image_to_mysql(args.host, time.strftime('%Y-%m-%d %H:%M:%S'), detected_persons, blob_img)
 
-                if objs:
-                    print('Detected Objects:')
-                    for obj in objs:
-                        if labels.get(obj.id, obj.id) == "person":
-                            detected_persons += 1
-                            # print(f"{labels.get(obj.id, obj.id)} - Score: {obj.score:.2f}")
-                            
-                            cv2_im = append_objs_to_img(cv2_im, inference_size, objs, labels, args.debug)
-                            
-                if args.debug:
-                    cv2.putText(frame, f"FPS: {fps:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1)
-                    cv2.putText(frame, f"Persons: {detected_persons}", (175, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1)
-                    cv2.putText(frame, f"inference TIme: {(inference_time * 1000):.4f} ms", (350, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1)
-                
-                if detected_persons > 0:
-                    dim = (int(args.width), int(args.height))
-                    frame = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
+            print(f"FPS: {fps:.2f}")
+            print(f"Detected Person: {detected_persons}")
+            time_elapsed = time.time() - start_time
+            print(f"Elapsed Time : {time_elapsed} seconds")
 
-                    blob_img = convert_image_to_blob(frame)
-                    upload_image_to_mysql(args.host, time.strftime('%Y-%m-%d %H:%M:%S'), detected_persons, blob_img)
+    except KeyboardInterrupt:
+        print("Inference process interrupted.")
 
-                print(f"FPS: {fps:.2f}")
-                print(f"Detected Person: {detected_persons}")
-                time_elapsed = time.time() - start_time
-                print(f"Elapsed Time : {time_elapsed} seconds")
-
-        except KeyboardInterrupt:
-            print("Inference process interrupted.")
-
-        finally:
-            cap.release()
+    finally:
+        cap.release()
 
 def append_objs_to_img(cv2_im, inference_size, objs, labels, debug, target_label="person"):
     height, width, channels = cv2_im.shape
