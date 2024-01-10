@@ -86,10 +86,6 @@ def main():
                 print("Error: Failed to grab frame / End of the frame")
                 break
 
-            if time_elapsed >= 3600:
-                print("1 hour elapsed. Program done.")
-                break
-
             cv2_im = frame
 
             if (time.time() - fps_start_time) > 0 :
