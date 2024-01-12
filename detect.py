@@ -74,8 +74,8 @@ def main():
 
     cap = cv2.VideoCapture(args.input)
 
-    start_time = time.time()
-    time_elapsed = 0
+    # start_time = time.time()
+    # time_elapsed = 0
 
     fps_start_time = time.time()
 
@@ -126,10 +126,10 @@ def main():
                 blob_img = convert_image_to_blob(frame)
                 upload_image_to_mysql(args.host, time.strftime('%Y-%m-%d %H:%M:%S'), detected_persons, blob_img)
 
-            print(f"FPS: {fps:.2f}")
-            print(f"Detected Person: {detected_persons}")
-            time_elapsed = time.time() - start_time
-            print(f"Elapsed Time : {time_elapsed} seconds")
+            # print(f"FPS: {fps:.2f}")
+            # print(f"Detected Person: {detected_persons}")
+            # time_elapsed = time.time() - start_time
+            # print(f"Elapsed Time : {time_elapsed} seconds")
 
     except KeyboardInterrupt:
         print("Inference process interrupted.")
@@ -184,10 +184,14 @@ def upload_image_to_mysql(host, timestamp, count, blob_data):
         print(f"Error: {e}")
 
     finally:
-        if connection.is_connected():
-            cursor.close()
-            connection.close()
-            print("MySQL connection closed")
+        try:
+            if connection.is_connected():
+                cursor.close()
+                connection.close()
+                print("MySQL connection closed")
+        except Error as e:
+            print(f"Error: {e}")
+            pass
 
 if __name__ == '__main__':
     program_start = time.time()
