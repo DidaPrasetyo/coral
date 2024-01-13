@@ -72,7 +72,8 @@ def main():
     labels = read_label_file(label)
     inference_size = input_size(interpreter)
 
-    cap = cv2.VideoCapture(args.input)
+    video_source = args.input
+    cap = cv2.VideoCapture(video_source)
 
     # start_time = time.time()
     # time_elapsed = 0
