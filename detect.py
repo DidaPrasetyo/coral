@@ -113,7 +113,7 @@ def main():
             detected_persons = 0
 
             if objs:
-                print('Detected Objects:')
+                # print('Detected Objects:')
                 for obj in objs:
                     if labels.get(obj.id, obj.id) == "person":
                         detected_persons += 1
