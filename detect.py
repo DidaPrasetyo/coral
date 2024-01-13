@@ -73,12 +73,12 @@ def main():
     inference_size = input_size(interpreter)
 
     cap = cv2.VideoCapture(args.input)
-    backend_name = cap.getBackendName()
 
     # start_time = time.time()
     # time_elapsed = 0
 
     fps_start_time = time.time()
+    is_video_file = video_source.lower().endswith((".mp4", ".avi", ".mkv"))
 
     try:
         while cap.isOpened():
@@ -86,7 +86,7 @@ def main():
             if not ret:
                 print("Error: Failed to grab frame")
 
-                if backend_name == "FFMPEG":
+                if is_video_file:
                     print("Video file ended. Exiting the loop.")
                     break
 
