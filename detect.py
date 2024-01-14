@@ -82,13 +82,13 @@ def main():
         cap = cv2.VideoCapture(video_source)
 
         if not cap.isOpened():
-            print(f"{time.time()} - Error: Failed to open video source")
+            print(f"{get_timestamp()} - Error: Failed to open video source")
 
             if is_video_file:
-                print(f"{time.time()} - Video file not found. Exiting the loop.")
+                print(f"{get_timestamp()} - Video file not found. Exiting the loop.")
                 break
 
-            print(f"{time.time()} - Re-attemp opening RTSP Stream in 10 seconds")
+            print(f"{get_timestamp()} - Re-attemp opening RTSP Stream in 10 seconds")
             time.sleep(10)    
             continue
 
@@ -96,13 +96,13 @@ def main():
             while cap.isOpened():
                 ret, frame = cap.read()
                 if not ret:
-                    print(f"{time.time()} - Error: Failed to grab frame")
+                    print(f"{get_timestamp()} - Error: Failed to grab frame")
 
                     if is_video_file:
-                        print(f"{time.time()} - Video file ended. Exiting the loop.")
+                        print(f"{get_timestamp()} - Video file ended. Exiting the loop.")
                         break
 
-                    print(f"{time.time()} - Re-attemp opening RTSP Stream in 10 seconds")
+                    print(f"{get_timestamp()} - Re-attemp opening RTSP Stream in 10 seconds")
                     time.sleep(10)    
                     continue
 
@@ -152,7 +152,7 @@ def main():
                 # print(f"Elapsed Time : {time_elapsed} seconds")
 
         except KeyboardInterrupt:
-            print(f"{time.time()} - Inference process interrupted.")
+            print(f"{get_timestamp()} - Inference process interrupted.")
 
         finally:
             cap.release()
@@ -198,23 +198,26 @@ def upload_image_to_mysql(host, timestamp, count, blob_data):
             cursor.execute(query, (timestamp, count, blob_data))
 
             connection.commit()
-            print(f"{time.time()} - Image uploaded to MySQL database")
+            print(f"{get_timestamp()} - Image uploaded to MySQL database")
 
     except Error as e:
-        print(f"{time.time()} - Error: {e}")
+        print(f"{get_timestamp()} - Error: {e}")
 
     finally:
         try:
             if connection.is_connected():
                 cursor.close()
                 connection.close()
-                print(f"{time.time()} - MySQL connection closed")
+                print(f"{get_timestamp()} - MySQL connection closed")
         except Error as e:
-            print(f"{time.time()} - Error: {e}")
+            print(f"{get_timestamp()} - Error: {e}")
             pass
+
+def get_timestamp():
+    return time.strftime('%Y-%m-%d %H:%M:%S')
 
 if __name__ == '__main__':
     program_start = time.time()
     main()
     program_finish = time.time() - program_start
-    print(f"{time.time()} - Program duration: {program_finish} s")
+    print(f"{get_timestamp()} - Program duration: {program_finish} s")
