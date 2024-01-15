@@ -76,86 +76,75 @@ def main():
     is_video_file = video_source.lower().endswith((".mp4", ".avi", ".mkv"))
     fps_start_time = time.time()
 
+    cap = cv2.VideoCapture(video_source)
     # start_time = time.time()
     # time_elapsed = 0
-    while True:
-        cap = cv2.VideoCapture(video_source)
 
-        if not cap.isOpened():
-            print(f"{get_timestamp()} - Error: Failed to open video source")
+    try:
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                print(f"{get_timestamp()} - Error: Failed to grab frame")
 
-            if is_video_file:
-                print(f"{get_timestamp()} - Video file not found. Exiting the loop.")
-                break
+                if is_video_file:
+                    print(f"{get_timestamp()} - Video file ended. Exiting the loop.")
+                    break
 
-            print(f"{get_timestamp()} - Re-attemp opening RTSP Stream in 10 seconds")
-            time.sleep(10)    
-            continue
+                print(f"{get_timestamp()} - Re-attemp opening RTSP Stream in 10 seconds")
+                time.sleep(10)
+                cap = cv2.VideoCapture(video_source)
+                continue
 
-        try:
-            while cap.isOpened():
-                ret, frame = cap.read()
-                if not ret:
-                    print(f"{get_timestamp()} - Error: Failed to grab frame")
+            cv2_im = frame
 
-                    if is_video_file:
-                        print(f"{get_timestamp()} - Video file ended. Exiting the loop.")
-                        break
+            if (time.time() - fps_start_time) > 0 :
+                elapsed_time = time.time() - fps_start_time
+                fps = 1 / elapsed_time
+                fps_start_time = time.time()
 
-                    print(f"{get_timestamp()} - Re-attemp opening RTSP Stream in 10 seconds")
-                    time.sleep(10)    
-                    continue
+            cv2_im_rgb = cv2.cvtColor(cv2_im, cv2.COLOR_BGR2RGB)
+            cv2_im_rgb = cv2.resize(cv2_im_rgb, inference_size)
 
-                cv2_im = frame
+            inference_start_time = time.perf_counter()
+            run_inference(interpreter, cv2_im_rgb.tobytes())
+            inference_time = time.perf_counter() - inference_start_time
 
-                if (time.time() - fps_start_time) > 0 :
-                    elapsed_time = time.time() - fps_start_time
-                    fps = 1 / elapsed_time
-                    fps_start_time = time.time()
+            # objs = get_objects(interpreter, args.threshold)[:args.top_k] # limit number detected
+            objs = get_objects(interpreter, args.threshold)
 
-                cv2_im_rgb = cv2.cvtColor(cv2_im, cv2.COLOR_BGR2RGB)
-                cv2_im_rgb = cv2.resize(cv2_im_rgb, inference_size)
+            detected_persons = 0
 
-                inference_start_time = time.perf_counter()
-                run_inference(interpreter, cv2_im_rgb.tobytes())
-                inference_time = time.perf_counter() - inference_start_time
+            if objs:
+                # print('Detected Objects:')
+                for obj in objs:
+                    if labels.get(obj.id, obj.id) == "person":
+                        detected_persons += 1
+                        # print(f"{labels.get(obj.id, obj.id)} - Score: {obj.score:.2f}")
+                        
+                        cv2_im = append_objs_to_img(cv2_im, inference_size, objs, labels, args.debug)
+                        
+            if args.debug:
+                cv2.putText(frame, f"FPS: {fps:.2f}", (60, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 1)
+                cv2.putText(frame, f"Persons: {detected_persons}", (230, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 1)
+                cv2.putText(frame, f"inference TIme: {(inference_time * 1000):.4f} ms", (410, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 1)
+            
+            if detected_persons > 0:
+                dim = (int(args.width), int(args.height))
+                frame = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
 
-                # objs = get_objects(interpreter, args.threshold)[:args.top_k] # limit number detected
-                objs = get_objects(interpreter, args.threshold)
+                blob_img = convert_image_to_blob(frame)
+                upload_image_to_mysql(args.host, time.strftime('%Y-%m-%d %H:%M:%S'), detected_persons, blob_img)
 
-                detected_persons = 0
+            # print(f"FPS: {fps:.2f}")
+            # print(f"Detected Person: {detected_persons}")
+            # time_elapsed = time.time() - start_time
+            # print(f"Elapsed Time : {time_elapsed} seconds")
 
-                if objs:
-                    # print('Detected Objects:')
-                    for obj in objs:
-                        if labels.get(obj.id, obj.id) == "person":
-                            detected_persons += 1
-                            # print(f"{labels.get(obj.id, obj.id)} - Score: {obj.score:.2f}")
-                            
-                            cv2_im = append_objs_to_img(cv2_im, inference_size, objs, labels, args.debug)
-                            
-                if args.debug:
-                    cv2.putText(frame, f"FPS: {fps:.2f}", (60, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 1)
-                    cv2.putText(frame, f"Persons: {detected_persons}", (230, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 1)
-                    cv2.putText(frame, f"inference TIme: {(inference_time * 1000):.4f} ms", (410, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 1)
-                
-                if detected_persons > 0:
-                    dim = (int(args.width), int(args.height))
-                    frame = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
+    except KeyboardInterrupt:
+        print(f"{get_timestamp()} - Inference process interrupted.")
 
-                    blob_img = convert_image_to_blob(frame)
-                    upload_image_to_mysql(args.host, time.strftime('%Y-%m-%d %H:%M:%S'), detected_persons, blob_img)
-
-                # print(f"FPS: {fps:.2f}")
-                # print(f"Detected Person: {detected_persons}")
-                # time_elapsed = time.time() - start_time
-                # print(f"Elapsed Time : {time_elapsed} seconds")
-
-        except KeyboardInterrupt:
-            print(f"{get_timestamp()} - Inference process interrupted.")
-
-        finally:
-            cap.release()
+    finally:
+        cap.release()
 
 def append_objs_to_img(cv2_im, inference_size, objs, labels, debug, target_label="person"):
     height, width, channels = cv2_im.shape
