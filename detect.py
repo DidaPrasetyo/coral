@@ -161,7 +161,7 @@ def append_objs_to_img(cv2_im, inference_size, objs, labels, debug, target_label
 
             if debug:
                 cv2_im = cv2.putText(cv2_im, label, (x0, y0+30),
-                                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
     return cv2_im
 
 def convert_image_to_blob(frame):
