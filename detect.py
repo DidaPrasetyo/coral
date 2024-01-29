@@ -77,6 +77,9 @@ def main():
     video_source = args.input
     is_video_file = video_source.lower().endswith((".mp4", ".avi", ".mkv"))
     fps_start_time = time.time()
+    
+    start_time = time.time()
+    time_elapsed = 0
 
     cap = cv2.VideoCapture(video_source)
 
@@ -137,6 +140,8 @@ def main():
 
                     blob_img = convert_image_to_blob(frame)
                     upload_image_to_mysql(args.host, time.strftime('%Y-%m-%d %H:%M:%S'), detected_persons, blob_img)
+
+                time_elapsed = time.time() - start_time
 
         except KeyboardInterrupt:
             print(f"{get_timestamp()} - Inference process interrupted.")
