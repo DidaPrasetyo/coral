@@ -111,6 +111,8 @@ def main():
                     fps = 1 / elapsed_time
                     fps_start_time = time.time()
 
+                    file1.write(f'{fps} - {time.strftime("%Y-%m-%d %H:%M:%S")}\n')
+
                 cv2_im_rgb = cv2.cvtColor(cv2_im, cv2.COLOR_BGR2RGB)
                 cv2_im_rgb = cv2.resize(cv2_im_rgb, inference_size)
 
@@ -119,6 +121,8 @@ def main():
                 inference_time = time.perf_counter() - inference_start_time
 
                 objs = get_objects(interpreter, args.threshold)
+
+                file2.write(f'{inference_time} - {time.strftime("%Y-%m-%d %H:%M:%S")}\n')
 
                 detected_persons = 0
 
