@@ -16,8 +16,6 @@ from pycoral.utils.edgetpu import run_inference
 
 def main():
     parser = argparse.ArgumentParser()
-    # parser.add_argument('-tk', '--top_k', type=int, default=3,
-    #                     help='number of categories with highest score to display')
     parser.add_argument('-m', '--model', required=True,
                         choices=["mobilenetv1", 
                                  "mobilenetv2", 
@@ -72,79 +70,83 @@ def main():
     labels = read_label_file(label)
     inference_size = input_size(interpreter)
 
+    dir_path = time.strftime('%Y-%m-%d_%H:%M:%S')
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+
+    dir_model_path = f'{dir_path}/{model_name}'
+    if not os.path.exists(dir_model_path):
+        os.makedirs(dir_model_path)
+
     video_source = args.input
     is_video_file = video_source.lower().endswith((".mp4", ".avi", ".mkv"))
     fps_start_time = time.time()
 
     cap = cv2.VideoCapture(video_source)
-    # start_time = time.time()
-    # time_elapsed = 0
 
-    try:
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                print(f"{get_timestamp()} - Error: Failed to grab frame")
+    with open(f'{dir_model_path}/{model_name}_{args.width}x{args.height}_fps_values.txt', 'w') as file1, open(f'{dir_model_path}/{model_name}_{args.width}x{args.height}_inference_values.txt', 'w') as file2:
 
-                if is_video_file:
-                    print(f"{get_timestamp()} - Video file ended. Exiting the loop.")
+        try:
+            while cap.isOpened():
+                ret, frame = cap.read()
+                if not ret:
+                    print(f"{get_timestamp()} - Error: Failed to grab frame")
+
+                    if is_video_file:
+                        print(f"{get_timestamp()} - Video file ended. Exiting the loop.")
+                        break
+
+                    print(f"{get_timestamp()} - Re-attemp opening RTSP Stream in 10 seconds")
+                    time.sleep(10)
+                    cap = cv2.VideoCapture(video_source)
+                    continue
+
+                if time_elapsed >= 3600:
+                    print("1 hour elapsed. Program done.")
                     break
 
-                print(f"{get_timestamp()} - Re-attemp opening RTSP Stream in 10 seconds")
-                time.sleep(10)
-                cap = cv2.VideoCapture(video_source)
-                continue
+                cv2_im = frame
 
-            cv2_im = frame
+                if (time.time() - fps_start_time) > 0 :
+                    elapsed_time = time.time() - fps_start_time
+                    fps = 1 / elapsed_time
+                    fps_start_time = time.time()
 
-            if (time.time() - fps_start_time) > 0 :
-                elapsed_time = time.time() - fps_start_time
-                fps = 1 / elapsed_time
-                fps_start_time = time.time()
+                cv2_im_rgb = cv2.cvtColor(cv2_im, cv2.COLOR_BGR2RGB)
+                cv2_im_rgb = cv2.resize(cv2_im_rgb, inference_size)
 
-            cv2_im_rgb = cv2.cvtColor(cv2_im, cv2.COLOR_BGR2RGB)
-            cv2_im_rgb = cv2.resize(cv2_im_rgb, inference_size)
+                inference_start_time = time.perf_counter()
+                run_inference(interpreter, cv2_im_rgb.tobytes())
+                inference_time = time.perf_counter() - inference_start_time
 
-            inference_start_time = time.perf_counter()
-            run_inference(interpreter, cv2_im_rgb.tobytes())
-            inference_time = time.perf_counter() - inference_start_time
+                objs = get_objects(interpreter, args.threshold)
 
-            # objs = get_objects(interpreter, args.threshold)[:args.top_k] # limit number detected
-            objs = get_objects(interpreter, args.threshold)
+                detected_persons = 0
 
-            detected_persons = 0
+                if objs:
+                    for obj in objs:
+                        if labels.get(obj.id, obj.id) == "person":
+                            detected_persons += 1
+                            
+                            cv2_im = append_objs_to_img(cv2_im, inference_size, objs, labels, args.debug)
+                            
+                if args.debug:
+                    cv2.putText(frame, f"FPS: {fps:.2f}", (60, 75), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                    cv2.putText(frame, f"Persons: {detected_persons}", (250, 75), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                    cv2.putText(frame, f"inference TIme: {(inference_time * 1000):.4f} ms", (450, 75), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                
+                if detected_persons > 0:
+                    dim = (int(args.width), int(args.height))
+                    frame = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
 
-            if objs:
-                # print('Detected Objects:')
-                for obj in objs:
-                    if labels.get(obj.id, obj.id) == "person":
-                        detected_persons += 1
-                        # print(f"{labels.get(obj.id, obj.id)} - Score: {obj.score:.2f}")
-                        
-                        cv2_im = append_objs_to_img(cv2_im, inference_size, objs, labels, args.debug)
-                        
-            if args.debug:
-                cv2.putText(frame, f"FPS: {fps:.2f}", (60, 75), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                cv2.putText(frame, f"Persons: {detected_persons}", (250, 75), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                cv2.putText(frame, f"inference TIme: {(inference_time * 1000):.4f} ms", (450, 75), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            
-            if detected_persons > 0:
-                dim = (int(args.width), int(args.height))
-                frame = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
+                    blob_img = convert_image_to_blob(frame)
+                    upload_image_to_mysql(args.host, time.strftime('%Y-%m-%d %H:%M:%S'), detected_persons, blob_img)
 
-                blob_img = convert_image_to_blob(frame)
-                upload_image_to_mysql(args.host, time.strftime('%Y-%m-%d %H:%M:%S'), detected_persons, blob_img)
+        except KeyboardInterrupt:
+            print(f"{get_timestamp()} - Inference process interrupted.")
 
-            # print(f"FPS: {fps:.2f}")
-            # print(f"Detected Person: {detected_persons}")
-            # time_elapsed = time.time() - start_time
-            # print(f"Elapsed Time : {time_elapsed} seconds")
-
-    except KeyboardInterrupt:
-        print(f"{get_timestamp()} - Inference process interrupted.")
-
-    finally:
-        cap.release()
+        finally:
+            cap.release()
 
 def append_objs_to_img(cv2_im, inference_size, objs, labels, debug, target_label="person"):
     height, width, channels = cv2_im.shape
@@ -165,14 +167,12 @@ def append_objs_to_img(cv2_im, inference_size, objs, labels, debug, target_label
     return cv2_im
 
 def convert_image_to_blob(frame):
-    # Convert image to binary format
     _, img_encoded = cv2.imencode('.jpg', frame)
     img_blob = img_encoded.tobytes()
     return img_blob
 
 def upload_image_to_mysql(host, timestamp, count, blob_data):
     try:
-        # Connect to MySQL database
         connection = mysql.connector.connect(
             host=host,
             database='coral',
