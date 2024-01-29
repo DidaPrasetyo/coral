@@ -70,11 +70,7 @@ def main():
     labels = read_label_file(label)
     inference_size = input_size(interpreter)
 
-    dir_path = time.strftime('%Y-%m-%d_%H:%M:%S')
-    if not os.path.exists(dir_path):
-        os.makedirs(dir_path)
-
-    dir_model_path = f'{dir_path}/{model_name}'
+    dir_model_path = f'{model_name}_{time.strftime('%Y-%m-%d_%H:%M:%S')}'
     if not os.path.exists(dir_model_path):
         os.makedirs(dir_model_path)
 
