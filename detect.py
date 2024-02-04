@@ -104,6 +104,9 @@ def main():
                     print("1 hour elapsed. Program done.")
                     break
 
+                dim = (int(args.width), int(args.height))
+                frame = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
+
                 cv2_im = frame
 
                 if (time.time() - fps_start_time) > 0 :
@@ -139,8 +142,6 @@ def main():
                     cv2.putText(frame, f"inference TIme: {(inference_time * 1000):.4f} ms", (450, 75), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                 
                 if detected_persons > 0:
-                    dim = (int(args.width), int(args.height))
-                    frame = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
 
                     blob_img = convert_image_to_blob(frame)
                     upload_image_to_mysql(args.host, time.strftime('%Y-%m-%d %H:%M:%S'), detected_persons, blob_img)
