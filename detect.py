@@ -137,9 +137,9 @@ def main():
                             cv2_im = append_objs_to_img(cv2_im, inference_size, objs, labels, args.debug)
                             
                 if args.debug:
-                    cv2.putText(frame, f"FPS: {fps:.2f}", (60, 75), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                    cv2.putText(frame, f"Persons: {detected_persons}", (250, 75), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                    cv2.putText(frame, f"inference TIme: {(inference_time * 1000):.4f} ms", (450, 75), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                    cv2.putText(frame, f"FPS: {fps:.2f}", (30, 75), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                    cv2.putText(frame, f"Persons: {detected_persons}", (220, 75), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                    cv2.putText(frame, f"inference TIme: {(inference_time * 1000):.4f} ms", (30, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
                 
                 if detected_persons > 0:
 
