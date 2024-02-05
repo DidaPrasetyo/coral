@@ -100,9 +100,9 @@ def main():
                     cap = cv2.VideoCapture(video_source)
                     continue
 
-                if time_elapsed >= 3600:
-                    print("1 hour elapsed. Program done.")
-                    break
+                # if time_elapsed >= 3600:
+                #     print("1 hour elapsed. Program done.")
+                #     break
 
                 dim = (int(args.width), int(args.height))
                 frame = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
