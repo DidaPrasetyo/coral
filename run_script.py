@@ -27,7 +27,7 @@ if __name__ == "__main__":
     
     # data = ["mobilenetv1", "mobilenetv2", "mobiledet", "efficientdet0", "efficientdet1", "efficientdet2", "efficientdet3"]
     data = ["mobilenetv1", "mobilenetv2", "mobiledet"]
-    source = ["rtsp://KCKS:majuteru5@10.15.40.48:554/Streaming/Channels/1101"]
+    source = ["rtsp://KCKS:majuteru5@10.15.40.48:554/Streaming/Channels/101", "rtsp://KCKS:majuteru5@10.15.40.48:554/Streaming/Channels/1101", "rtsp://KCKS:majuteru5@10.15.40.48:554/Streaming/Channels/201"]
 
     # Run the command multiple times
     for model in data:
