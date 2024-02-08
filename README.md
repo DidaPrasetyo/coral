@@ -60,4 +60,4 @@ python3 detect.py -m {model} -i {input source} --host {ip address}
 | -resw | Optional | Specifies width of resolution input source, default: 1280 |
 | -resh | Optional | Specifies heigh of resolution input source, default: 720 |
 
-2. The program will transmit the inference result to the database, which can be viewed on the website deployed as per the prerequisites in this [repository](https://github.com/DidaPrasetyo/coral_log/tree/master?tab=readme-ov-file#website-deployment).
+2. The program will transmit the inference result to the database, which can be viewed on the website deployed based in this [repository](https://github.com/DidaPrasetyo/coral_log/tree/master?tab=readme-ov-file#website-deployment).
