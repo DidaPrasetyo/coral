@@ -15,11 +15,13 @@ This repository contains the necessary code and resources to implement human det
 git clone https://github.com/DidaPrasetyo/coral
 ```
 
-2. Install OpenCV 
+2. Install OpenCV and mysql-connector-python
 
 ```
 cd coral/preparation
 bash install_opencv.sh
+
+pip3 install mysql-connector-python
 ```
 
 3. Check the model and label in the `model`  and `label`  folders.
